@@ -1,0 +1,63 @@
+version: '3.5'
+
+services:
+  ### Jesse's Workspace 1 ################################################
+  jesse-1:
+    image: salehmir/jesse:latest
+    depends_on:
+      - postgres
+      - redis
+    tty: true
+    env_file:
+      - ../SharkBot/.env
+    ports:
+      - "9001:9000"
+      # Jupyter Port
+      - "8888:8888"
+    volumes:
+      - ../SharkBot:/home
+    container_name: jesse-1
+    command: bash -c "jesse install-live --no-strict && jesse run"
+
+  ### Jesse's Workspace 2 ################################################
+  jesse-2:
+    image: salehmir/jesse:latest
+    depends_on:
+      - postgres
+      - redis
+    tty: true
+    env_file:
+      - ../SharkBotScalp/.env
+    ports:
+      - "9002:9000"
+      # Jupyter Port
+      - "8889:8888"
+    volumes:
+      - ../SharkBotScalp:/home
+    container_name: jesse-2
+    command: bash -c "jesse install-live --no-strict && jesse run"
+
+  ### PostgreSQL ################################################
+  postgres:
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=jesse_user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_MULTIPLE_DATABASES=jesse_db_1, jesse_db_2
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+      - ./docker-postgresql-multiple-databases:/docker-entrypoint-initdb.d
+    container_name: postgres
+
+  ### Redis ################################################
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    container_name: redis
+
+volumes:
+  postgres-data:
